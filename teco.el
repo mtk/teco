@@ -2,7 +2,7 @@
 
 ;; -*-byte-compile-dynamic-docstrings: nil;-*-
 ;;; Commentary
-;;; Teco interpreter for Gnu Emacs, version 7.
+;;; Teco interpreter for Gnu Emacs, version 9.
 
 ;; LCD Archive Entry:
 ;; teco|Dale R. Worley|worley@alum.mit.edu
@@ -99,6 +99,14 @@
 ;; Added support for evil, try to add the ability to remap
 ;; teco:command-escape, which is one of the original feature
 ;; of TECO.
+
+;; Version 9
+;; Someone fixed a problem with the macro syntax used to define teco operators.
+;; Someone simplified the code used to display Escape's as $'s.
+;; Someone fixed the code that returns the minibuffer to strip out the prompt
+;; and text properties in order to return a plain string.
+;; It wasn't Dale Worley (I asked).  So this now works with at least version
+;; 28 now. - mtk@acm.org
 
 ;; To be able to invoke Teco directly, do:
 ;; (global-set-key "\C-z" 'teco:command)
