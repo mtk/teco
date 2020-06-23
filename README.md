@@ -17,19 +17,30 @@ execute the TECO program
 
 `<.-z; 2fwl i,EMPTY$ l>`
 
+  * < loop body >
+  * ".-z" (point - end of buffer)
+  * ";" end loop test (if prefix arg ".-z" is >= 0)
+  * "2fwl" - "2" => repeat count, "fw" => bounds of a word, "l" =>
+    move forward
+  * "iSTRING-TO-INSERT$" (where $ is actually ESC)
+  * "l" (with no args) move to the beginning of the next lkine
+
 While this is easily done with a keyboard macro, the TECO language
-offers other functionality and is often quicker to use if you're
+offers more functionality and is often quicker to use if you're
 willing to pay the cost of learning how to use it.  Personally, I'm
 addicted to clearing a buffer by executing the TECO program `hk`.
 
-Dale Worley (worley@alum.mit.edu) implemented a TECO interpreter in
-Elisp.  It was available from the old EMACS LCD archive was still
-kicking around the EmacsWiki.  Since I still use it, I created this
-repository to make it available from the modern Emacs package system.
+Dale Worley (worley@alum.mit.edu) implemented this TECO interpreter in
+Elisp.  It was originally available from the old EMACS LCD archive and
+was still kicking around the EmacsWiki.  Since I still use it, I
+created this package to make it available from the modern Emacs
+package system.
 
 <https://en.wikipedia.org/wiki/TECO_(text_editor)>
 
 <https://emacswiki.org/emacs/TecoInterpreterInElisp>>
 
 <https://www.emacswiki.org/emacs/teco.el>
+
+<https://github.com/mtk/teco.git>
 
