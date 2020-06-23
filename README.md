@@ -17,13 +17,13 @@ execute the TECO program
 
 `<.-z; 2fwl i,EMPTY$ l>`
 
-  * < loop body >
+  * "<" loop body ">"
   * ".-z" (point - end of buffer)
   * ";" end loop test (if prefix arg ".-z" is >= 0)
-  * "2fwl" - "2" => repeat count, "fw" => bounds of a word, "l" =>
-    move forward
+  * "2fwl" is really three things: "2" => repeat count, "fw" => bounds
+    of a word, "l" => move forward
   * "iSTRING-TO-INSERT$" (where $ is actually ESC)
-  * "l" (with no args) move to the beginning of the next lkine
+  * "l" (with no args) move to the beginning of the next line
 
 While this is easily done with a keyboard macro, the TECO language
 offers more functionality and is often quicker to use if you're
