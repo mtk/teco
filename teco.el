@@ -1,23 +1,4 @@
-;;; teco.el --- Dale Worley's teco-in-elisp interpreter
-
-;; -*-byte-compile-dynamic-docstrings: nil;-*-
-;;; Commentary
-;;; Teco interpreter for Gnu Emacs, version 9.
-
-;; LCD Archive Entry:
-;; teco|Dale R. Worley|worley@alum.mit.edu
-;; |Teco interpreter
-;; |96-09-02|version 7|~/packages/teco.el.Z
-
-;; This code has been tested some, but no doubt contains a zillion bugs.
-;; You have been warned.
-
-;; Some byte-compilers will not compile the function definitions for the
-;; Teco commands because the defuns are created by macros.  If you have this
-;; problem, I can send you the byte-compiled version.
-
-;; Written by Dale R. Worley based on a C implementation by Matt Fichtenbaum.
-;; Please send comments, bug fixes, enhancements, etc. to worley@alum.mit.edu.
+;;; teco.el --- Teco interpreter for Gnu Emacs
 
 ;; WARRANTY DISCLAIMER
 
@@ -40,100 +21,17 @@
 ;; This program and its components belong to GenRad Inc, Concord MA 01742.
 ;; They may be copied if this copyright notice is included.
 
-;; Change log:
+;; Author: Dale R. Worley <worley@alum.mit.edu>
+;; Mainatiner: Mark T. Kennedy <mtk@acm.org>
+;; Created: 09-02-1996
+;; Version: 9.0
+;; Keywords: convenience emulations files
+;; URL: https://github.com/mtk/teco.git
 
-;; Version 1
-;; Original implementation
+;;; Commentary
 
-;; Version 2
-;; Fix bugs found by Alan Katz in S.
-
-;; Version 3
-;; Fix bugs found by Lum Johnson in key-binding code.
-;; Fix handling of ^C, ^G, and ^L in command input.
-;; Fix <...> so it iterates indefinitely.  (Found by Mark Henderson.)
-;; Fix ; so it exits from iterations correctly.
-;; Add FR and FS commands.
-;; Make commands that are supposed to set ^S do so.
-;; Make flow-control commands clear the @-flag, so the @-flag can be
-;; statically predicted during skipping of code.
-;; Set up immediate-action commands ?, /, and *q.
-
-;; Version 4
-;; The T, D, and K commands weren't clearing their arguments.
-;; Since ! is a flow-control command (O can go to it), it must clear the
-;; @-flag.
-
-;; Version 5
-;; Fix bug found by karl@kelp.boston.ma.us in teco:output, causing trace output
-;; to generate errors.  It also caused =, ==, and === operators to generate
-;; errors.
-;; Put in improved disclaimer of copyright and warranty.
-;; Added teco:version variable and function.
-
-;; Version 6
-;; Add attribution to "Philosophy".
-;; Fix handling of negative arguments to S.  (Fix due to Bill Freeman.)
-;; Fix order of arguments produced by ^Y.  (Fix due to Bill Freeman.)
-;; Add ES flag to control placement of cursor after reverse searches.
-;; (because different Tecos handle cursor placement differently)
-;; Altered expression computation so that "-" alone yields -1 as a value.
-;; (useful for -Sabc$)
-;; Add n,mL command, mostly for use with FW.
-;; Add FL and FW commands.
-;; Add FR and FS to list of commands.
-;; Add FE to execute Emacs lisp code.
-;; Add teco:copy-to-q-reg to make loading q-regs easier.
-;; Function 'teco' added as alias for 'teco:command', to make invocation with
-;; M-x easier.
-;; Fix an assortment of bugs and bad coding found by karl@kelp.boston.ma.us.
-
-;; Version 7
-;; Changed construction of teco:command-keymap to work in Emacs 19.30.
-;; (This may be non-compatible with Emacs 18.)
-;; Fixed minor bugs revealed by byte-compile.
-
-;; Version 8
-;; Change `last-command-char' to new `last-command-event'.
-;; Fixed some bugs revealed by byte-compile.
-;; Added support for evil, try to add the ability to remap
-;; teco:command-escape, which is one of the original feature
-;; of TECO.
-
-;; Version 9
-;; Someone fixed a problem with the macro syntax used to define teco operators.
-;; Someone simplified the code used to display Escape's as $'s.
-;; Someone fixed the code that returns the minibuffer to strip out the prompt
-;; and text properties in order to return a plain string.
-;; It wasn't Dale Worley (I asked).  So this now works with at least version
-;; 28 now. - mtk@acm.org
-
-;; To be able to invoke Teco directly, do:
-;; (global-set-key "\C-z" 'teco:command)
-;;					; or whatever key binding you want
-;; (autoload 'teco:command "teco"
-;;   "Read and execute a Teco command string."
-;;   t nil)
-;; (autoload 'teco "teco"
-;;   "Read and execute a Teco command string."
-;;   t nil)
-;;					; 'teco' is an alias for 'teco:command'
-;; This can be useful for loading q-regs from an Emacs buffer:
-;; (global-set-key "\C-xy" 'teco:copy-to-q-reg)
-;;					; or whatever key binding you want
-;; (autoload 'teco:copy-to-q-reg "teco"
-;;   "Copy region into Teco q-reg REG."
-;;   t nil)
-
-;; Differences from other Tecos:
-;; Character positions in the buffer are numbered in the Emacs way:  The first
-;; character is numbered 1 (or (point-min) if narrowing is in effect).  The
-;; B command returns that number.
-;; Ends of lines are represented by a single character (newline), so C and R
-;; skip over them, rather than 2C and 2R.
-;; All file I/O is left to the underlying Emacs.  Thus, almost all Ex commands
-;; are omitted.
-;; Immediate action commands are ?, /, and *q.
+;; This code has been tested some, but no doubt contains a zillion bugs.
+;; You have been warned.
 
 ;; Command set:
 ;;	NUL	Not a command.
@@ -315,8 +213,97 @@
 ;; after Ed Post, "Real Programmers Don't Use Pascal", in Datamation,
 ;; July 1983, p. 264
 
+;;; Change Log:
+
+;; Version 1
+;; Original implementation
+
+;; Version 2
+;; Fix bugs found by Alan Katz in S.
+
+;; Version 3
+;; Fix bugs found by Lum Johnson in key-binding code.
+;; Fix handling of ^C, ^G, and ^L in command input.
+;; Fix <...> so it iterates indefinitely.  (Found by Mark Henderson.)
+;; Fix ; so it exits from iterations correctly.
+;; Add FR and FS commands.
+;; Make commands that are supposed to set ^S do so.
+;; Make flow-control commands clear the @-flag, so the @-flag can be
+;; statically predicted during skipping of code.
+;; Set up immediate-action commands ?, /, and *q.
+
+;; Version 4
+;; The T, D, and K commands weren't clearing their arguments.
+;; Since ! is a flow-control command (O can go to it), it must clear the
+;; @-flag.
+
+;; Version 5
+;; Fix bug found by karl@kelp.boston.ma.us in teco:output, causing trace output
+;; to generate errors.  It also caused =, ==, and === operators to generate
+;; errors.
+;; Put in improved disclaimer of copyright and warranty.
+;; Added teco:version variable and function.
+
+;; Version 6
+;; Add attribution to "Philosophy".
+;; Fix handling of negative arguments to S.  (Fix due to Bill Freeman.)
+;; Fix order of arguments produced by ^Y.  (Fix due to Bill Freeman.)
+;; Add ES flag to control placement of cursor after reverse searches.
+;; (because different Tecos handle cursor placement differently)
+;; Altered expression computation so that "-" alone yields -1 as a value.
+;; (useful for -Sabc$)
+;; Add n,mL command, mostly for use with FW.
+;; Add FL and FW commands.
+;; Add FR and FS to list of commands.
+;; Add FE to execute Emacs lisp code.
+;; Add teco:copy-to-q-reg to make loading q-regs easier.
+;; Function 'teco' added as alias for 'teco:command', to make invocation with
+;; M-x easier.
+;; Fix an assortment of bugs and bad coding found by karl@kelp.boston.ma.us.
+
+;; Version 7
+;; Changed construction of teco:command-keymap to work in Emacs 19.30.
+;; (This may be non-compatible with Emacs 18.)
+;; Fixed minor bugs revealed by byte-compile.
+
+;; Version 8
+;; Change `last-command-char' to new `last-command-event'.
+;; Fixed some bugs revealed by byte-compile.
+;; Added support for evil, try to add the ability to remap
+;; teco:command-escape, which is one of the original feature
+;; of TECO.
+
+;; Version 9
+;; Someone fixed a problem with the macro syntax used to define teco operators.
+;; Someone simplified the code used to display Escape's as $'s.
+;; Someone fixed the code that returns the minibuffer to strip out the prompt
+;; and text properties in order to return a plain string.
+;; It wasn't Dale Worley (I asked).  So this now works with at least version
+;; 28 now. - mtk@acm.org
+
+;; Typical key binding:
+;; (global-set-key "\C-z" 'teco:command)
+;; or
+;; (global-set-key [?\e ?\e] 'teco:command) ; traditional old EMACS
+
+;; This can be useful for loading q-regs from an Emacs buffer:
+;; (global-set-key "\C-xy" 'teco:copy-to-q-reg)
+;;					; or whatever key binding you want
+
+;; Differences from other Tecos:
+;; Character positions in the buffer are numbered in the Emacs way:  The first
+;; character is numbered 1 (or (point-min) if narrowing is in effect).  The
+;; B command returns that number.
+;; Ends of lines are represented by a single character (newline), so C and R
+;; skip over them, rather than 2C and 2R.
+;; All file I/O is left to the underlying Emacs.  Thus, almost all Ex commands
+;; are omitted.
+;; Immediate action commands are ?, /, and *q.
+
+
+
+
 ;;; Code:
-;; (require 'backquote)
 
 ;; The version number
 (defvar teco-version "7.9"
@@ -2235,30 +2222,6 @@ and does
     table)
   "Display table used while reading teco commands.")
 
-(defun teco:copy-to-q-reg (char start end)
-  "Copy region into Teco q-reg REG.
-When called from program, takes three args: REG, START, and END.
-START and END are buffer positions indicating what to copy."
-  (interactive "cCopy region to q-reg: \nr")
-  (setq char (aref teco:mapch-l char))
-  ;; test that it's valid
-  (if (= (logand (aref teco:qspec-valid char) 1) 0)
-      (error "? IQN Invalid Q-reg name"))
-  (aset teco:qreg-text char (buffer-substring start end)))
-
-(defun teco:command ()
-  "Read and execute a Teco command string."
-  (interactive)
-  (let ((command (teco:read-command)))
-    (if command
-        (progn
-          (setq teco:output-buffer (get-buffer-create "*Teco Output*"))
-          (with-current-buffer teco:output-buffer
-            (goto-char (point-max))
-            (insert teco:prompt command))
-          (teco:execute-command command)))))
-(defalias 'teco 'teco:command)
-
 (defun teco:read-command ()
   "Read a teco command string from the user."
   (minibuffer-with-setup-hook
@@ -2373,5 +2336,38 @@ START and END are buffer positions indicating what to copy."
   (if (not (pos-visible-in-window-p))
       (enlarge-window 1)))
 
+;;;###autoload
+(defun teco:copy-to-q-reg (char start end)
+  "Copy region into Teco q-reg REG.
+When called from program, takes three args: REG, START, and END.
+START and END are buffer positions indicating what to copy."
+  (interactive "cCopy region to q-reg: \nr")
+  (setq char (aref teco:mapch-l char))
+  ;; test that it's valid
+  (if (= (logand (aref teco:qspec-valid char) 1) 0)
+      (error "? IQN Invalid Q-reg name"))
+  (aset teco:qreg-text char (buffer-substring start end)))
+
+;;;###autoload
+(defun teco:command ()
+  "Read and execute a Teco command string."
+  (interactive)
+  (let ((command (teco:read-command)))
+    (if command
+        (progn
+          (setq teco:output-buffer (get-buffer-create "*Teco Output*"))
+          (with-current-buffer teco:output-buffer
+            (goto-char (point-max))
+            (insert teco:prompt command))
+          (teco:execute-command command)))))
+
+;;;###autoload
+(defalias 'teco 'teco:command)
+
 (provide 'teco)
+
+;; replace with local variable section
+;; -*-byte-compile-dynamic-docstrings: nil;-*-
+
 ;;; teco.el ends here
+
