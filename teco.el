@@ -22,7 +22,7 @@
 ;; They may be copied if this copyright notice is included.
 
 ;; Author: Dale R. Worley <worley@alum.mit.edu>
-;; Mainatiner: Mark T. Kennedy <mtk@acm.org>
+;; Maintainer: Mark T. Kennedy <mtk@acm.org>
 ;; Created: 09-02-1996
 ;; Version: 9.0
 ;; Keywords: convenience emulations files
