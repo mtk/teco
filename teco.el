@@ -1,5 +1,19 @@
 ;;; teco.el --- Teco interpreter for Gnu Emacs
 
+;; This program is free software: you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation, either version 3 of
+;; the License, or (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public
+;; License along with this program.  If not, see
+;; <https://www.gnu.org/licenses/>.
+
 ;; WARRANTY DISCLAIMER
 
 ;; This software was created by Dale R. Worley and is
@@ -24,7 +38,7 @@
 ;; Author: Dale R. Worley <worley@alum.mit.edu>
 ;; Maintainer: Mark T. Kennedy <mtk@acm.org>
 ;; Created: 09-02-1996
-;; Version: 9.0
+;; Version: 9
 ;; Keywords: convenience emulations files
 ;; URL: https://github.com/mtk/teco.git
 
@@ -33,7 +47,25 @@
 ;; This code has been tested some, but no doubt contains a zillion bugs.
 ;; You have been warned.
 
-;; Command set:
+;; Typical modern key binding:
+;; (global-set-key "\C-z" 'teco:command)
+
+;; Traditional TECO-based EMACS binding:
+;; (global-set-key [?\e ?\e] 'teco:command) ; traditional TECO-based
+
+;; This can be useful for loading q-regs from an Emacs buffer:
+;; (global-set-key "\C-xy" 'teco:copy-to-q-reg)
+
+;; Differences from other Tecos:
+;; Character positions in the buffer are numbered in the Emacs way:
+;; The first character is numbered 1 (or (point-min) if narrowing is
+;; in effect).  The B command returns that number.  Ends of lines are
+;; represented by a single character (newline), so C and R skip over
+;; them, rather than 2C and 2R.  All file I/O is left to the
+;; underlying Emacs.  Thus, almost all Ex commands are omitted.
+;; Immediate action commands are ?, /, and *q.
+
+;; TECO Command set:
 ;;	NUL	Not a command.
 ;;	^A	Output message to terminal (argument ends with ^A)
 ;;	^C	Exit macro
@@ -215,6 +247,11 @@
 
 ;;; Change Log:
 
+;; Normally, best practice says not to include a change log since it
+;; replicates info from underlying source code management systems.
+;; But this package is so old, it predates git!  So I'm leaving this
+;; static text here as developer documentation.
+
 ;; Version 1
 ;; Original implementation
 
@@ -274,32 +311,15 @@
 ;; of TECO.
 
 ;; Version 9
-;; Someone fixed a problem with the macro syntax used to define teco operators.
-;; Someone simplified the code used to display Escape's as $'s.
-;; Someone fixed the code that returns the minibuffer to strip out the prompt
-;; and text properties in order to return a plain string.
-;; It wasn't Dale Worley (I asked).  So this now works with at least version
-;; 28 now. - mtk@acm.org
-
-;; Typical key binding:
-;; (global-set-key "\C-z" 'teco:command)
-;; or
-;; (global-set-key [?\e ?\e] 'teco:command) ; traditional old EMACS
-
-;; This can be useful for loading q-regs from an Emacs buffer:
-;; (global-set-key "\C-xy" 'teco:copy-to-q-reg)
-;;					; or whatever key binding you want
-
-;; Differences from other Tecos:
-;; Character positions in the buffer are numbered in the Emacs way:  The first
-;; character is numbered 1 (or (point-min) if narrowing is in effect).  The
-;; B command returns that number.
-;; Ends of lines are represented by a single character (newline), so C and R
-;; skip over them, rather than 2C and 2R.
-;; All file I/O is left to the underlying Emacs.  Thus, almost all Ex commands
-;; are omitted.
-;; Immediate action commands are ?, /, and *q.
-
+;; Someone fixed a problem with the macro syntax used to define teco
+;; operators.
+;; Someone simplified the code used to display Escape's as $'s in the
+;; minibuffer.
+;; Someone fixed the code that returns the minibuffer contents to the TECO interpreter to strip
+;; out the prompt and text properties in order to return a plain
+;; string.
+;; It wasn't Dale Worley (I asked).  So this now works with at least
+;; EMACS version 28.
 
 
 
@@ -313,7 +333,7 @@
   "Return string describing the version of Teco.
 When called interactively, displays the version."
   (interactive)
-  (if (called-interactively-p)
+  (if (called-interactively-p 'interactive)
       (message "Teco version %s" (teco-version))
     teco-version))
 
@@ -1494,7 +1514,7 @@ and does
       (teco:error "ISS"))
   (setq c (aref s i))
   (setq i (1+ i))
-  (regexp-quote (aref teco:q-reg-text c)))
+  (regexp-quote (aref teco:qreg-text c)))
 
 (defun teco:parse-search-string-e-g ()
   (if (>= i l)
@@ -1591,7 +1611,7 @@ and does
       (teco:error "ISS"))
   (setq c (aref s i))
   (setq i (1+ i))
-  (aref teco:q-reg-text c))
+  (aref teco:qreg-text c))
 
 (teco:define-type-2
  ?o					; o
