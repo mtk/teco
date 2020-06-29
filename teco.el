@@ -1449,79 +1449,84 @@ and does
       (setq r (concat r (teco:parse-search-string-1))))
     r))
 
+(defvar teco:i)
+(defvar teco:l)
+(defvar teco:s)
+(defvar teco:c)
+
 (defun teco:parse-search-string-1 ()
-  (if (>= i l)
+  (if (>= teco:i teco:l)
       (teco:error "ISS"))
-  (setq c (aref s i))
-  (setq i (1+ i))
+  (setq teco:c (aref teco:s teco:i))
+  (setq teco:i (1+ teco:i))
   (cond
-   ((eq c ?\C-e)			; ^E - special match characters
+   ((eq teco:c ?\C-e)			; ^E - special match characters
     (teco:parse-search-string-e))
-   ((eq c ?\C-n)			; ^Nx - match all but x
+   ((eq teco:c ?\C-n)			; ^Nx - match all but x
     (teco:parse-search-string-n))
-   ((eq c ?\C-q)			; ^Qx - use x literally
+   ((eq teco:c ?\C-q)			; ^Qx - use x literally
     (teco:parse-search-string-q))
-   ((eq c ?\C-s)			; ^S - match separator chars
+   ((eq teco:c ?\C-s)			; ^S - match separator chars
     "[^A-Za-z0-9]")
-   ((eq c ?\C-x)			; ^X - match any character
+   ((eq teco:c ?\C-x)			; ^X - match any character
     "[\000-\377]")
    (t					; ordinary character
-    (teco:parse-search-string-char c))))
+    (teco:parse-search-string-char teco:c))))
 
 (defun teco:parse-search-string-char (c)
   (regexp-quote (char-to-string c)))
 
 (defun teco:parse-search-string-q ()
-  (if (>= i l)
+  (if (>= teco:i teco:l)
       (teco:error "ISS"))
-  (setq c (aref s i))
-  (setq i (1+ i))
-  (teco:parse-search-string-char c))
+  (setq teco:c (aref teco:s teco:i))
+  (setq teco:i (1+ teco:i))
+  (teco:parse-search-string-char teco:c))
 
 (defun teco:parse-search-string-e ()
-  (if (>= i l)
+  (if (>= teco:i teco:l)
       (teco:error "ISS"))
-  (setq c (aref s i))
-  (setq i (1+ i))
+  (setq teco:c (aref teco:s teco:i))
+  (setq teco:i (1+ teco:i))
   (cond
-   ((or (eq c ?a) (eq c ?A))		; ^EA - match alphabetics
+   ((or (eq teco:c ?a) (eq teco:c ?A))		; ^EA - match alphabetics
     "[A-Za-z]")
-   ((or (eq c ?c) (eq c ?C))		; ^EC - match symbol constituents
+   ((or (eq teco:c ?c) (eq teco:c ?C))		; ^EC - match symbol constituents
     "[A-Za-z.$]")
-   ((or (eq c ?d) (eq c ?D))		; ^ED - match numerics
+   ((or (eq teco:c ?d) (eq teco:c ?D))		; ^ED - match numerics
     "[0-9]")
-   ((eq c ?g)				; ^EGq - match any char in q-reg
+   ((eq teco:c ?g)				; ^EGq - match any char in q-reg
     (teco:parse-search-string-e-g))
-   ((or (eq c ?l) (eq c ?L))		; ^EL - match line terminators
+   ((or (eq teco:c ?l) (eq teco:c ?L))		; ^EL - match line terminators
     "[\012\013\014]")
-   ((eq c ?q)				; ^EQq - use contents of q-reg
+   ((eq teco:c ?q)				; ^EQq - use contents of q-reg
     (teco:parse-search-string-e-q))
-   ((eq c ?r)				; ^ER - match alphanumerics
+   ((eq teco:c ?r)				; ^ER - match alphanumerics
     "[A-Za-z0-9]")
-   ((eq c ?s)				; ^ES - match non-null space/tab seq
+   ((eq teco:c ?s)				; ^ES - match non-null space/tab seq
     "[ \t]+")
-   ((eq c ?v)				; ^EV - match lower case alphabetic
+   ((eq teco:c ?v)				; ^EV - match lower case alphabetic
     "[a-z]")
-   ((eq c ?w)				; ^EW - match upper case alphabetic
+   ((eq teco:c ?w)				; ^EW - match upper case alphabetic
     "[A-Z]")
-   ((eq c ?x)				; ^EX - match any character
+   ((eq teco:c ?x)				; ^EX - match any character
     "[\000-\377]")
    (t
     (teco:error "ISS"))))
 
 (defun teco:parse-search-string-e-q ()
-  (if (>= i l)
+  (if (>= teco:i teco:l)
       (teco:error "ISS"))
-  (setq c (aref s i))
-  (setq i (1+ i))
-  (regexp-quote (aref teco:qreg-text c)))
+  (setq teco:c (aref teco:s teco:i))
+  (setq teco:i (1+ teco:i))
+  (regexp-quote (aref teco:qreg-text teco:c)))
 
 (defun teco:parse-search-string-e-g ()
-  (if (>= i l)
+  (if (>= teco:i teco:l)
       (teco:error "ISS"))
-  (setq c (aref s i))
-  (setq i (1+ i))
-  (let* ((q (aref teco:qreg-text c))
+  (setq teco:c (aref teco:s teco:i))
+  (setq teco:i (1+ teco:i))
+  (let* ((q (aref teco:qreg-text teco:c))
          (len (length q))
          (null (= len 0))
          (one-char (= len 1))
@@ -1533,7 +1538,7 @@ and does
      (null
       "[^\000-\377]")
      (one-char
-      (teco:parse-search-string-char c))
+      (teco:parse-search-string-char teco:c))
      (t
       (while (setq p (string-match "^]\\^" q)) ;FIXME
         (setq q (concat (substring q 1 p) (substring q (1+ p)))))
@@ -1576,42 +1581,42 @@ and does
     r))
 
 (defun teco:substitute-text-string-1 ()
-  (if (>= i l)
+  (if (>= teco:i teco:l)
       (teco:error "ISS"))
-  (setq c (aref s i))
-  (setq i (1+ i))
+  (setq teco:c (aref teco:s teco:i))
+  (setq teco:i (1+ teco:i))
   (cond
-   ((eq c ?\C-e)			; ^E - special string characters
+   ((eq teco:c ?\C-e)			; ^E - special string characters
     (teco:substitute-text-string-e))
-   ((eq c ?\C-q)			; ^Qx - use x literally
+   ((eq teco:c ?\C-q)			; ^Qx - use x literally
     (teco:substitute-text-string-q))
    (t					; ordinary character
-    (char-to-string c))))
+    (char-to-string teco:c))))
 
 (defun teco:substitute-text-string-q ()
-  (if (>= i l)
+  (if (>= teco:i teco:l)
       (teco:error "ISS"))
-  (setq c (aref s i))
-  (setq i (1+ i))
-  (char-to-string c))
+  (setq teco:c (aref teco:s teco:i))
+  (setq teco:i (1+ teco:i))
+  (char-to-string teco:c))
 
 (defun teco:substitute-text-string-e ()
-  (if (>= i l)
+  (if (>= teco:i teco:l)
       (teco:error "ISS"))
-  (setq c (aref s i))
-  (setq i (1+ i))
+  (setq teco:c (aref teco:s teco:i))
+  (setq teco:i (1+ teco:i))
   (cond
-   ((eq c ?q)				; ^EQq - use contents of q-reg
+   ((eq teco:c ?q)				; ^EQq - use contents of q-reg
     (teco:substitute-text-string-e-q))
    (t
     (teco:error "ISS"))))
 
 (defun teco:substitute-text-string-e-q ()
-  (if (>= i l)
+  (if (>= teco:i teco:l)
       (teco:error "ISS"))
-  (setq c (aref s i))
-  (setq i (1+ i))
-  (aref teco:qreg-text c))
+  (setq teco:c (aref teco:s teco:i))
+  (setq teco:i (1+ teco:i))
+  (aref teco:qreg-text teco:c))
 
 (teco:define-type-2
  ?o					; o
@@ -1846,6 +1851,8 @@ and does
           (aref teco:mapch-l arg))
     (error nil)))
 
+(defvar teco:term-char)
+
 (defun teco:get-text-arg (&optional term-char default-term-char)
   ;; figure out what the terminating character is
   (setq teco:term-char (or term-char
@@ -1968,6 +1975,8 @@ and does
 
 
 ;; I/O routines
+
+(defvar teco:output-start)
 
 (defvar teco:output-buffer (get-buffer-create "*Teco Output*")
   "The buffer into which Teco output is written.")
