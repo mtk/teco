@@ -35,6 +35,8 @@ Elisp.  It was originally available from the old EMACS LCD archive and
 is still kicking around the EmacsWiki.  I created this package to make
 it available from the modern Emacs package system.
 
+- mtk@acm.org
+
 <https://en.wikipedia.org/wiki/TECO_(text_editor)>
 
 <https://emacswiki.org/emacs/TecoInterpreterInElisp>>
