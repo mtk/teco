@@ -1440,19 +1440,21 @@ and does
            teco:at-flag nil
            teco:exp-op 'start))))
 
-(defun teco:parse-search-string (s)
-  (let ((i 0)
-        (l (length s))
-        (r "")
-        c)
-    (while (< i l)
-      (setq r (concat r (teco:parse-search-string-1))))
-    r))
-
+;; these were globals used to share info across related routines below.
+;; put them in a namespace to avoid byte-compiler warnings.
 (defvar teco:i)
 (defvar teco:l)
 (defvar teco:s)
 (defvar teco:c)
+
+(defun teco:parse-search-string (s)
+  (let ((teco:i 0)
+        (teco:l (length s))
+        (teco:r "")
+        teco:c)
+    (while (< teco:i teco:l)
+      (setq teco:r (concat teco:r (teco:parse-search-string-1))))
+    teco:r))
 
 (defun teco:parse-search-string-1 ()
   (if (>= teco:i teco:l)
@@ -1572,13 +1574,13 @@ and does
         (concat "[^" p "]"))))))
 
 (defun teco:substitute-text-string (s)
-  (let ((i 0)
-        (l (length s))
-        (r "")
-        c)
-    (while (< i l)
-      (setq r (concat r (teco:substitute-text-string-1))))
-    r))
+  (let ((teco:i 0)
+        (teco:l (length s))
+        (teco:r "")
+        teco:c)
+    (while (< teco:i teco:l)
+      (setq teco:r (concat teco:r (teco:substitute-text-string-1))))
+    teco:r))
 
 (defun teco:substitute-text-string-1 ()
   (if (>= teco:i teco:l)
@@ -1976,6 +1978,7 @@ and does
 
 ;; I/O routines
 
+;; was a global, so force into namespace to silence byte compiler
 (defvar teco:output-start)
 
 (defvar teco:output-buffer (get-buffer-create "*Teco Output*")
