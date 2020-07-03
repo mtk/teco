@@ -1,4 +1,4 @@
-;;; teco.el --- Teco interpreter for Gnu Emacs
+;;; teco.el --- Teco interpreter
 
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -42,7 +42,7 @@
 ;; Keywords: convenience emulations files
 ;; URL: https://github.com/mtk/teco.git
 
-;;; Commentary
+;;; Commentary:
 
 ;; This code has been tested some, but no doubt contains a zillion bugs.
 ;; You have been warned.
@@ -551,8 +551,7 @@ and does
                              ("NFR" . "Numeric arg with FR")
                              ("INT" . "Internal error")
                              ("EFI" . "EOF read from std input")
-                             ("IAA" . "Invalid A arg")
-                             ))
+                             ("IAA" . "Invalid A arg")))
 
 (defconst teco:spec-chars
   [0          1          0          0	; ^@ ^A ^B ^C

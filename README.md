@@ -37,6 +37,8 @@ it available from the modern Emacs package system.
 
 - mtk@acm.org
 
+[![MELPA](https://melpa.org/packages/flycheck-badge.svg)](https://melpa.org/#/flycheck)
+
 <https://en.wikipedia.org/wiki/TECO_(text_editor)>
 
 <https://emacswiki.org/emacs/TecoInterpreterInElisp>>
