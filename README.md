@@ -45,5 +45,7 @@ it available from the modern Emacs package system.
 
 <https://www.emacswiki.org/emacs/teco.el>
 
+<https://github.com/emacsmirror/teco>
+
 <https://github.com/mtk/teco.git>
 

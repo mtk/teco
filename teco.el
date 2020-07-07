@@ -1,5 +1,9 @@
 ;;; teco.el --- Teco interpreter
 
+;; todo
+;;  - maybe implement :l as end-of-line since 'l -c' doesn't always
+;;    work (e.g. not terminating newline)
+
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
 ;; published by the Free Software Foundation, either version 3 of
@@ -47,201 +51,10 @@
 ;; This code has been tested some, but no doubt contains a zillion bugs.
 ;; You have been warned.
 
-;; Typical modern key binding:
-;; (global-set-key "\C-z" 'teco:command)
-
-;; Traditional TECO-based EMACS binding:
-;; (global-set-key [?\e ?\e] 'teco:command) ; traditional TECO-based
-
-;; This can be useful for loading q-regs from an Emacs buffer:
-;; (global-set-key "\C-xy" 'teco:copy-to-q-reg)
-
-;; Differences from other Tecos:
-;; Character positions in the buffer are numbered in the Emacs way:
-;; The first character is numbered 1 (or (point-min) if narrowing is
-;; in effect).  The B command returns that number.  Ends of lines are
-;; represented by a single character (newline), so C and R skip over
-;; them, rather than 2C and 2R.  All file I/O is left to the
-;; underlying Emacs.  Thus, almost all Ex commands are omitted.
-;; Immediate action commands are ?, /, and *q.
-
-;; TECO Command set:
-;;	NUL	Not a command.
-;;	^A	Output message to terminal (argument ends with ^A)
-;;	^C	Exit macro
-;;	^C^C	Stop execution
-;;	^C	(type-in) abort command
-;;	^D	Set radix to decimal
-;;	^EA	(match char) Match alphabetics
-;;	^EC	(match char) Match symbol constituents
-;;	^ED	(match char) Match numerics
-;;	^EGq	(match char) Match any char in q-reg
-;;	^EL	(match char) Match line terminators
-;;	^EQq	(string char) Use contents of q-reg
-;;	^ER	(match char) Match alphanumerics
-;;	^ES	(match char) Match non-null space/tab
-;;	^EV	(match char) Match lower case alphabetic
-;;	^EW	(match char) Match upper case alphabetic
-;;	^EX	(match char) Match any char
-;;	^G	(type-in) abort command
-;;	TAB	Insert tab and text
-;;	LF	Line terminator; Ignored in commands
-;;	VT	Ignored in commands
-;;	FF	Ignored in commands
-;;	FF	(type-in) redraw screen
-;;	CR	Ignored in commands
-;;	^Nx	(match char) Match all but x
-;;	^O	Set radix to octal
-;;	^Q	Convert line argument into character argument
-;;	^Qx	(string char) Use x literally
-;;	n^R	Set radix to n
-;;	:^R	Enter recursive edit
-;;	^S	-(length of last referenced string)
-;;			set by S, I, TAB, G, FR, FS, and \
-;;	^S	(match char) match separator char
-;;	^T	Ascii value of next character typed
-;;	n^T	Output Ascii character with value n
-;;	^U	(type-in) Kill command line
-;;	^Uq	Put text argument into q-reg
-;;	n^Uq	Put Ascii character 'n' into q-reg
-;;	:^Uq	Append text argument to q-reg
-;;	n:^Uq	Append character 'n' to q-reg
-;;	^X	Set/get search mode flag
-;;	^X	(match char) Match any character
-;;	^Y	Equivalent to '.+^S,.'
-;;	^Z	Not a Teco command
-;;	ESC	String terminator; absorbs arguments
-;;	ESC ESC	(type-in) End command
-;;	ESC ESC Exit from macro
-;;	^\	Not a Teco command
-;;	^]	Not a Teco command
-;;	^^x	Ascii value of the character x
-;;	^_	One's complement (logical NOT)
-;;	!	Define label (argument ends with !)
-;;	"	Start conditional
-;;	n"<	Test for less than zero
-;;	n">	Test for greater than zero
-;;	n"=	Test for equal to zero
-;;	n"A	Test for alphabetic
-;;	n"C	Test for symbol constituent
-;;	n"D	Test for numeric
-;;	n"E	Test for equal to zero
-;;	n"F	Test for false
-;;	n"G	Test for greater than zero
-;;	n"L	Test for less than zero
-;;	n"N	Test for not equal to zero
-;;	n"R	Test for alphanumeric
-;;	n"S	Test for successful
-;;	n"T	Test for true
-;;	n"U	Test for unsuccessful
-;;	n"V	Test for lower case
-;;	n"W	Test for upper case
-;;	#	Logical OR
-;;	$	Not a Teco command
-;;	n%q	Add n to q-reg and return result
-;;	&	Logical AND
-;;	'	End conditional
-;;	(	Expression grouping
-;;	)	Expression grouping
-;;	*	Multiplication
-;;	*q	(immediate action) Copy last command into q-reg
-;;	+	Addition
-;;	,	Argument separator
-;;	-	Subtraction or negation
-;;	.	Current pointer position
-;;	/	Division
-;;	/	(immediate action) Insert last command into command buffer
-;;	0-9	Digit
-;;	n<	Iterate n times
-;;	=	Type in decimal
-;;	:=	Type in decimal, no newline
-;;	==	Type in octal
-;;	:==	Type in octal, no newline
-;;	===	Type in hexadecimal
-;;	:===	Type in hexadecimal, no newline
-;;	::	Make next search a compare
-;;	>	End iteration
-;;	?	Toggle tracing
-;;	?	(immediate action) Insert command string or macro that reported
-;;		last error, up to point of error, into command buffer
-;;	n:A	Get Ascii code of character at relative position n
-;;	B	Character position of beginning of buffer
-;;	nC	Advance n characters
-;;	nD	Delete n characters
-;;	n,mD	Delete characters between n and m
-;;	ET	Typeout control flag
-;;			8	no echo for ^T
-;;			32	no wait for ^T
-;;	ES	Search control flag
-;;			1	leave pointer at end of found string
-;;				after reverse search, rather than at beginning
-;;	FE	Execute text argument as Emacs lisp.  Uses string chars but
-;;		not match chars, so FE^EQq$ executes contents of q-reg
-;;	FL	Searches right or left over balanced parenthesized strings,
-;;		in the same way as FW searches over words
-;;		Syntax is defined by Emacs' syntax table
-;;	FR	Replace string found by previous match with text argument
-;;	FSaaa$bbb$
-;;		Search for string aaa and replace it with bbb.
-;;	nFW	Return arguments .,x where x is the other side of the n-th
-;;		word from point.  Main uses:  FWL moves right one word,
-;;		-FWL moves left one word, FWK deletes one word to right,
-;;		nFWXq puts n words into q-reg
-;;		"word" is defined by Emacs' syntax table
-;;	:FW	Like FW, but goes to near side of the n-th word
-;;	Gq	Get string from q-reg into buffer
-;;	:Gq	Type out q-reg
-;;	H	Equivalent to 'B,Z'
-;;	I	Insert text argument
-;;	nJ	Move pointer to character n
-;;	nK	Kill n lines
-;;	n,mK	Kill characters between n and m
-;;	nL	Advance n lines
-;;	n,mL	Same as n+m-.J, mostly for use by FW
-;;	Mq	Execute string in q-reg
-;;	O	Goto label
-;;	nO	Go to n-th label in list (0-origin)
-;;	Qq	Number in q-reg
-;;	nQq	Ascii value of n-th character in q-reg
-;;	:Qq	Size of text in q-reg
-;;	nR	Back up n characters
-;;	nS	Search
-;;	nT	Type n lines
-;;	n,mT	Type chars from n to m
-;;	nUq	Put number n into q-reg
-;;	nV	Type n lines around pointer
-;;	W	Redraw the display
-;;	nW	Put point on line n of the display
-;;	nXq	Put n lines into q-reg
-;;	n,mXq	Put characters from n to m into q-reg
-;;	n:Xq	Append n lines to q-reg q
-;;	n,m:Xq	Append characters from n to m into q-reg
-;;	Z 	Pointer position at end of buffer
-;;	[q	Put q-reg on stack
-;;	\	Value of digit string in buffer
-;;	n\	Convert n to digits and insert in buffer
-;;	]q	Pop q-reg from stack
-;;	:]q	Test whether stack is empty and return value
-;;	`	Not a Teco command
-;;	a-z	Treated the same as A-Z
-;;	{	Not a Teco command
-;;	|	Conditional 'else'
-;;	}	Not a Teco comand
-;;	~	Not a Teco command
-;;	DEL	Delete last character typed in
-
-;; Special q-register names:
-;;
-;;	_	last search string
-;;	#	the current command string
-;;	*	last command string
-;;	%	the last command string or macro that returned an error,
-;;		to the point at which the error was found
-
-;; Philosophy:
-;;   Real programmers don't want "what you see is what you get", they want
-;;   "you asked for it, you got it".  They want editors that are terse,
-;;   powerful, cryptic, and unforgiving.  In a word, Teco.
+;;; Philosophy:
+;;    Real programmers don't want "what you see is what you get", they want
+;;    "you asked for it, you got it".  They want editors that are terse,
+;;    powerful, cryptic, and unforgiving.  In a word, Teco.
 ;; after Ed Post, "Real Programmers Don't Use Pascal", in Datamation,
 ;; July 1983, p. 264
 
@@ -250,7 +63,7 @@
 ;; Normally, best practice says not to include a change log since it
 ;; replicates info from underlying source code management systems.
 ;; But this package is so old, it predates git!  So I'm leaving this
-;; static text here as developer documentation.
+;; static text here as developer documentation. - mtk@acm.org
 
 ;; Version 1
 ;; Original implementation
@@ -315,9 +128,9 @@
 ;; operators.
 ;; Someone simplified the code used to display Escape's as $'s in the
 ;; minibuffer.
-;; Someone fixed the code that returns the minibuffer contents to the TECO interpreter to strip
-;; out the prompt and text properties in order to return a plain
-;; string.
+;; Someone fixed the code that returns the minibuffer contents to the
+;; TECO interpreter to strip out the prompt and text properties in
+;; order to return a plain string.
 ;; It wasn't Dale Worley (I asked).  So this now works with at least
 ;; EMACS version 28.
 
@@ -2233,19 +2046,21 @@ and does
 ;; Input handling
 
 (defvar teco:command-keymap
-  (list 'keymap (make-vector 128 'teco:command-self-insert))
+  (let ((skm (list
+	      'keymap
+	      (make-vector 128 #'teco:command-self-insert))))
+    (define-key skm "\^c" #'teco:command-quit)
+    (define-key skm "\^g" #'teco:command-quit)
+    (define-key skm "\^l" #'teco:command-ctrl-l)
+    (define-key skm "\^m" #'teco:command-return)
+    (define-key skm "\^u" #'teco:command-ctrl-u)
+    (define-key skm "\e"  #'teco:command-escape)
+    (define-key skm "\^?" #'teco:command-delete)
+    (define-key skm "?"   #'teco:command-query)
+    (define-key skm "/"   #'teco:command-slash)
+    (define-key skm "*"   #'teco:command-star)
+    skm)
   "Keymap used while reading teco commands.")
-
-(define-key teco:command-keymap "\^c" 'teco:command-quit)
-(define-key teco:command-keymap "\^g" 'teco:command-quit)
-(define-key teco:command-keymap "\^l" 'teco:command-ctrl-l)
-(define-key teco:command-keymap "\^m" 'teco:command-return)
-(define-key teco:command-keymap "\^u" 'teco:command-ctrl-u)
-(define-key teco:command-keymap "\e" 'teco:command-escape)
-(define-key teco:command-keymap "\^?" 'teco:command-delete)
-(define-key teco:command-keymap "?" 'teco:command-query)
-(define-key teco:command-keymap "/" 'teco:command-slash)
-(define-key teco:command-keymap "*" 'teco:command-star)
 
 (defvar teco:command-display-table
   (let ((table (make-display-table)))
@@ -2258,7 +2073,7 @@ and does
   (minibuffer-with-setup-hook
       (lambda ()
         (setq buffer-display-table teco:command-display-table))
-    (catch 'teco:command-quit
+    (catch #'teco:command-quit
       (read-from-minibuffer teco:prompt nil teco:command-keymap))))
 
 (defun teco:command-self-insert ()
@@ -2268,7 +2083,7 @@ and does
 (defun teco:command-quit ()
   (interactive)
   (beep)
-  (throw 'teco:command-quit nil))
+  (throw #'teco:command-quit nil))
 
 (defun teco:command-ctrl-l ()
   (interactive)
@@ -2282,8 +2097,8 @@ and does
 (defun teco:command-escape ()
   (interactive)
   ;; Two ESCs in a row terminate the command string
-  (if (eq last-command 'teco:command-escape)
-      (throw 'teco:command-quit (minibuffer-contents-no-properties)))
+  (if (eq last-command #'teco:command-escape)
+      (throw #'teco:command-quit (minibuffer-contents-no-properties)))
   (teco:command-insert-character 27))
 
 (defun teco:command-ctrl-u ()
@@ -2354,7 +2169,7 @@ and does
               (progn
                 (aset teco:qreg-text c1 (aref teco:qreg-text ?#))
                 (message "Last Teco command stored in q-register %c" c1)
-                (throw 'teco:command-quit nil))
+                (throw #'teco:command-quit nil))
             ;; if q-reg name is invalid, just insert the character
             (beep)
             (teco:command-insert-character c))))
@@ -2370,6 +2185,8 @@ and does
 ;;;###autoload
 (defun teco:copy-to-q-reg (char start end)
   "Copy region into Teco q-reg REG.
+This can be useful for pre-loading q-registers from an Emacs buffer.
+
 When called from program, takes three args: REG, START, and END.
 START and END are buffer positions indicating what to copy."
   (interactive "cCopy region to q-reg: \nr")
@@ -2381,7 +2198,198 @@ START and END are buffer positions indicating what to copy."
 
 ;;;###autoload
 (defun teco:command ()
-  "Read and execute a Teco command string."
+  "Read and execute a Teco command string against the current buffer.
+
+The Teco command is entered in a minibuffer. The minibuffer is
+terminated and the command executed by typing ESC ESC.
+
+Character positions in the buffer are numbered in the Emacs way:
+The first character is numbered 1 (or (point-min) if narrowing is
+in effect).  The B command returns that number.  Ends of lines are
+represented by a single character (newline), so C and R skip over
+them, rather than 2C and 2R.  All file I/O is left to the
+underlying Emacs.  Thus, almost all Teco Ex commands are omitted.
+Immediate action commands are ?, /, and *q.
+
+TECO Command set:
+	NUL	Not a command.
+	^A	Output message to terminal (argument ends with ^A)
+	^C	Exit macro
+	^C^C	Stop execution
+	^C	(type-in) abort command
+	^D	Set radix to decimal
+	^EA	(match char) Match alphabetics
+	^EC	(match char) Match symbol constituents
+	^ED	(match char) Match numerics
+	^EGq	(match char) Match any char in q-reg
+	^EL	(match char) Match line terminators
+	^EQq	(string char) Use contents of q-reg
+	^ER	(match char) Match alphanumerics
+	^ES	(match char) Match non-null space/tab
+	^EV	(match char) Match lower case alphabetic
+	^EW	(match char) Match upper case alphabetic
+	^EX	(match char) Match any char
+	^G	(type-in) abort command
+	TAB	Insert tab and text
+	LF	Line terminator; Ignored in commands
+	VT	Ignored in commands
+	FF	Ignored in commands
+	FF	(type-in) redraw screen
+	CR	Ignored in commands
+	^Nx	(match char) Match all but x
+	^O	Set radix to octal
+	^Q	Convert line argument into character argument
+	^Qx	(string char) Use x literally
+	n^R	Set radix to n
+	:^R	Enter recursive edit
+	^S	-(length of last referenced string)
+			set by S, I, TAB, G, FR, FS, and \\
+	^S	(match char) match separator char
+	^T	Ascii value of next character typed
+	n^T	Output Ascii character with value n
+	^U	(type-in) Kill command line
+	^Uq	Put text argument into q-reg
+	n^Uq	Put Ascii character 'n' into q-reg
+	:^Uq	Append text argument to q-reg
+	n:^Uq	Append character 'n' to q-reg
+	^X	Set/get search mode flag
+	^X	(match char) Match any character
+	^Y	Equivalent to '.+^S,.'
+	^Z	Not a Teco command
+	ESC	String terminator; absorbs arguments
+	ESC ESC	(type-in) End command
+	ESC ESC Exit from macro
+	^\	Not a Teco command
+	^]	Not a Teco command
+	^^x	Ascii value of the character x
+	^_	One's complement (logical NOT)
+	!	Define label (argument ends with !)
+	\"	Start conditional
+	n\"<	Test for less than zero
+	n\">	Test for greater than zero
+	n\"=	Test for equal to zero
+	n\"A	Test for alphabetic
+	n\"C	Test for symbol constituent
+	n\"D	Test for numeric
+	n\"E	Test for equal to zero
+	n\"F	Test for false
+	n\"G	Test for greater than zero
+	n\"L	Test for less than zero
+	n\"N	Test for not equal to zero
+	n\"R	Test for alphanumeric
+	n\"S	Test for successful
+	n\"T	Test for true
+	n\"U	Test for unsuccessful
+	n\"V	Test for lower case
+	n\"W	Test for upper case
+	#	Logical OR
+	$	Not a Teco command
+	n%q	Add n to q-reg and return result
+	&	Logical AND
+	'	End conditional
+	(	Expression grouping
+	)	Expression grouping
+	*	Multiplication
+	*q	(immediate action) Copy last command into q-reg
+	+	Addition
+	,	Argument separator
+	-	Subtraction or negation
+	.	Current pointer position
+	/	Division
+	/	(immediate action) Insert last command into command buffer
+	0-9	Digit
+	n<	Iterate n times
+	=	Type in decimal
+	:=	Type in decimal, no newline
+	==	Type in octal
+	:==	Type in octal, no newline
+	===	Type in hexadecimal
+	:===	Type in hexadecimal, no newline
+	::	Make next search a compare
+	>	End iteration
+	?	Toggle tracing
+	?	(immediate action) Insert command string or macro that reported
+		last error, up to point of error, into command buffer
+	n:A	Get Ascii code of character at relative position n
+	B	Character position of beginning of buffer
+	nC	Advance n characters
+	nD	Delete n characters
+	n,mD	Delete characters between n and m
+	ET	Typeout control flag
+			8	no echo for ^T
+			32	no wait for ^T
+	ES	Search control flag
+			1	leave pointer at end of found string
+				after reverse search, rather than at beginning
+	FE	Execute text argument as Emacs Lisp.  Uses string chars but
+		not match chars, so FE^EQq$ executes contents of q-reg
+	FL	Searches right or left over balanced parenthesized strings,
+		in the same way as FW searches over words
+		Syntax is defined by Emacs' syntax table
+	FR	Replace string found by previous match with text argument
+	FSaaa$bbb$
+		Search for string aaa and replace it with bbb.
+	nFW	Return arguments .,x where x is the other side of the n-th
+		word from point.  Main uses:  FWL moves right one word,
+		-FWL moves left one word, FWK deletes one word to right,
+		nFWXq puts n words into q-reg
+		\"word\" is defined by Emacs' syntax table
+	:FW	Like FW, but goes to near side of the n-th word
+	Gq	Get string from q-reg into buffer
+	:Gq	Type out q-reg
+	H	Equivalent to 'B,Z'
+	I	Insert text argument
+	nJ	Move pointer to character n
+	nK	Kill n lines
+	n,mK	Kill characters between n and m
+	nL	Advance n lines
+	n,mL	Same as n+m-.J, mostly for use by FW
+	Mq	Execute string in q-reg
+	O	Goto label
+	nO	Go to n-th label in list (0-origin)
+	Qq	Number in q-reg
+	nQq	Ascii value of n-th character in q-reg
+	:Qq	Size of text in q-reg
+	nR	Back up n characters
+	nS	Search
+	nT	Type n lines
+	n,mT	Type chars from n to m
+	nUq	Put number n into q-reg
+	nV	Type n lines around pointer
+	W	Redraw the display
+	nW	Put point on line n of the display
+	nXq	Put n lines into q-reg
+	n,mXq	Put characters from n to m into q-reg
+	n:Xq	Append n lines to q-reg q
+	n,m:Xq	Append characters from n to m into q-reg
+	Z 	Pointer position at end of buffer
+	[q	Put q-reg on stack
+	\	Value of digit string in buffer
+	n\	Convert n to digits and insert in buffer
+	]q	Pop q-reg from stack
+	:]q	Test whether stack is empty and return value
+	`	Not a Teco command
+	a-z	Treated the same as A-Z
+	{	Not a Teco command
+	|	Conditional 'else'
+	}	Not a Teco comand
+	~	Not a Teco command
+	DEL	Delete last character typed in
+
+Special q-register names:
+
+	_	last search string
+	#	the current command string
+	*	last command string
+	%	the last command string or macro that returned an error,
+		to the point at which the error was found
+
+Typical modern key binding:
+  (global-set-key \"\C-z\" 'teco:command)
+
+Traditional TECO-based EMACS binding:
+  (global-set-key [?\e ?\e] 'teco:command)
+"
   (interactive)
   (let ((command (teco:read-command)))
     (if command
@@ -2393,7 +2401,7 @@ START and END are buffer positions indicating what to copy."
           (teco:execute-command command)))))
 
 ;;;###autoload
-(defalias 'teco 'teco:command)
+(defalias 'teco #'teco:command)
 
 (provide 'teco)
 
