@@ -41,7 +41,7 @@ it available from the modern Emacs package system.
 
 <https://en.wikipedia.org/wiki/TECO_(text_editor)>
 
-<https://emacswiki.org/emacs/TecoInterpreterInElisp>>
+<https://emacswiki.org/emacs/TecoInterpreterInElisp>
 
 <https://www.emacswiki.org/emacs/teco.el>
 
